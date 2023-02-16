@@ -8,6 +8,9 @@
         "fbdev.h": "c",
         "lv_drv_conf.h": "c",
         "lvgl.h": "c",
-        "lv_conf.h": "c"
+        "lv_conf.h": "c",
+        "sdl.h": "c",
+        "sdl_common.h": "c",
+        "sdl_common_internal.h": "c"
     }
 }
