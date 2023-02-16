@@ -29,15 +29,17 @@ CFLAGS 				:= -O0 -g $(WARNINGS)
 DEFINES				:= -D SIMULATOR=1 -D LV_BUILD_TEST=0
 
 # Include simulator inc folder first so lv_conf.h from custom UI can be used instead
-INC 				:= -I./ui/simulator/inc/ -I./ -I./lvgl/
+INC 				:= -I./ui/simulator/inc/ -I./ -I./lvgl/ -I./lv_drivers/
 LDLIBS	 			:= -lSDL2 -lm
 BIN 				:= $(BIN_DIR)/demo
 
 COMPILE				= $(CC) $(CFLAGS) $(INC) $(DEFINES)
 
 # Automatically include all source files
-SRCS 				:= $(shell find $(SRC_DIR) -type f -name '*.c' -not -path '*/\.*')
+SRCS 				:= $(shell find $(SRC_DIR) -type f -name '*.c'  -not -path '*/demos/*' -not -path '*/examples/*' -not -path '*/test/*' -not -path '*/lv_examples/*')
 OBJECTS    			:= $(patsubst $(SRC_DIR)%,$(BUILD_DIR)/%,$(SRCS:.$(SRC_EXT)=.$(OBJ_EXT)))
+
+$(warning ${SRCS})
 
 all: default
 

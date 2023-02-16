@@ -1,0 +1,13 @@
+{
+    "files.associations": {
+        "monitor.h": "c",
+        "keyboard.h": "c",
+        "mouse.h": "c",
+        "ctime": "c",
+        "lv_demo.h": "c",
+        "fbdev.h": "c",
+        "lv_drv_conf.h": "c",
+        "lvgl.h": "c",
+        "lv_conf.h": "c"
+    }
+}
