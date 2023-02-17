@@ -1,7 +1,6 @@
 #define _DEFAULT_SOURCE /* needed for usleep() */
 
 #include "lvgl.h"
-#include <pthread.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -13,7 +12,6 @@
 #endif
 
 static void hal_init(void);
-static int tick_thread(void *data);
 static void demo(void);
 
 int main(int argc, char **argv)
@@ -116,10 +114,6 @@ static void demo()
  */
 static void hal_init(void)
 {
-  pthread_t tickThrad;
-  pthread_create(&tickThrad, NULL, (void *)tick_thread, NULL);
-  pthread_detach(tickThrad);
-
 #if USE_SDL == 1
   sdl_init();
 #elif USE_FBDEV || USE_BSD_FBDEV
@@ -143,19 +137,7 @@ static void hal_init(void)
   disp_drv.antialiasing = 1;
 
   lv_disp_t *disp = lv_disp_drv_register(&disp_drv);
-}
 
-static int tick_thread(void *data)
-{
-  (void)data;
-
-  int ms = 10;
-
-  while (1)
-  {
-    lv_tick_inc(ms);
-    usleep(ms * 1e3);
-  }
-
-  return 0;
+  lv_theme_t *th = lv_theme_default_init(disp, lv_palette_main(LV_PALETTE_BLUE), lv_palette_main(LV_PALETTE_RED), LV_THEME_DEFAULT_DARK, LV_FONT_DEFAULT);
+  lv_disp_set_theme(disp, th);
 }
