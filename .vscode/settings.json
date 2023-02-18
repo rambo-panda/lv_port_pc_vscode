@@ -11,6 +11,8 @@
         "lv_conf.h": "c",
         "sdl.h": "c",
         "sdl_common.h": "c",
-        "sdl_common_internal.h": "c"
+        "sdl_common_internal.h": "c",
+        "lv_canvas.h": "c",
+        "stdio.h": "c"
     }
 }

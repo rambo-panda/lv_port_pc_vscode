@@ -1,45 +1,26 @@
-#define _DEFAULT_SOURCE /* needed for usleep() */
-
-#include "lvgl.h"
+#include "./lv_canvas.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
 
-#if USE_SDL == 0
-#include "display/fbdev.h"
-#else
-#include "sdl/sdl.h"
-#endif
-
 static void hal_init(void);
 static void demo(void);
 
-int main(int argc, char **argv) {
+int main(int argc, char **argv)
+{
   (void)argc; /*Unused*/
   (void)argv; /*Unused*/
 
-  LV_LOG_INFO("\r\n"
-              "LVGL v%d.%d.%d "
-              " Benchmark (in csv format)\r\n",
-              LVGL_VERSION_MAJOR, LVGL_VERSION_MINOR, LVGL_VERSION_PATCH);
-
-  // Initialize LVGL
-  lv_init();
-
-  // Initialize the HAL (display, input devices, tick) for LVGL
-  hal_init();
+  createCanvas(NULL, NULL);
 
   demo();
 
-  while (1) {
-    lv_timer_handler_run_in_period(LV_DISP_DEF_REFR_PERIOD);
-    usleep(LV_DISP_DEF_REFR_PERIOD * 1e3);
-  }
-
+  handlerJob();
   return 0;
 }
 
-static void demo() {
+static void demo()
+{
   lv_obj_t *img = lv_img_create(lv_scr_act());
 
   // lv_img_set_src(img, "S:lvgl/examples/libs/png/wink.png");
@@ -62,7 +43,8 @@ static void demo() {
   info.weight = 16;
   info.style = FT_FONT_STYLE_NORMAL;
   info.mem = NULL;
-  if (!lv_ft_font_init(&info)) {
+  if (!lv_ft_font_init(&info))
+  {
     LV_LOG_ERROR("create failed.");
   }
 
@@ -96,33 +78,9 @@ static void demo() {
  * Initialize the Hardware Abstraction Layer (HAL) for the LVGL graphics
  * library
  */
-static void hal_init(void) {
-#if USE_SDL == 1
-  sdl_init();
-#elif USE_FBDEV || USE_BSD_FBDEV
-  fbdev_init();
-#endif
+static void hal_init(void)
+{
+  LV_17_DISP_INIT;
 
-  // https://docs.lvgl.io/8.3/porting/display.html
-  static lv_disp_draw_buf_t disp_buf;
-
-  static lv_color_t buf_1[SDL_HOR_RES * 10];
-  static lv_color_t buf_2[SDL_HOR_RES * 10];
-
-  lv_disp_draw_buf_init(&disp_buf, buf_1, buf_2, SDL_HOR_RES * 10);
-
-  static lv_disp_drv_t disp_drv;
-  lv_disp_drv_init(&disp_drv);
-  disp_drv.draw_buf = &disp_buf;
-  disp_drv.flush_cb = sdl_display_flush;
-  disp_drv.hor_res = SDL_HOR_RES;
-  disp_drv.ver_res = SDL_VER_RES;
-  disp_drv.antialiasing = 1;
-
-  lv_disp_t *disp = lv_disp_drv_register(&disp_drv);
-
-  lv_theme_t *th = lv_theme_default_init(
-      disp, lv_palette_main(LV_PALETTE_BLUE), lv_palette_main(LV_PALETTE_RED),
-      LV_THEME_DEFAULT_DARK, LV_FONT_DEFAULT);
-  lv_disp_set_theme(disp, th);
+  createDisplay();
 }
