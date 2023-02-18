@@ -1,28 +1,14 @@
 #include "./lv_canvas.h"
 
-static void ready()
+
+// TODO: 因为下面static原因，且目前对于多屏(屋里显示器)支持有些多余，暂时不考虑
+static lv_disp_t *createDisplay()
 {
-    static int handler = 0;
+    // lv_disp_set_default // 指定默认display
+    // lv_obj_get_disp
 
-    if (handler)
-        return;
-
-    handler = 1;
-
-    LV_LOG_INFO("\r\n"
-                "LVGL v%d.%d.%d "
-                " Benchmark (in csv format)\r\n",
-                LVGL_VERSION_MAJOR, LVGL_VERSION_MINOR, LVGL_VERSION_PATCH);
-
-    lv_init();
-    LV_17_DISP_INIT;
-
-    createDisplay();
-}
-
-static lv_disp_t *_createDefaultDisplay()
-{
     // https://docs.lvgl.io/8.3/porting/display.html
+    // XXX: 以下几个static全局作用域的变量，必须设置static属性，因为display不能被回收
     static lv_disp_draw_buf_t disp_buf;
 
     static lv_color_t buf_1[10 * LV_17_HOR_RES];
@@ -44,17 +30,31 @@ static lv_disp_t *_createDefaultDisplay()
         disp, lv_palette_main(LV_PALETTE_BLUE), lv_palette_main(LV_PALETTE_RED),
         LV_THEME_DEFAULT_DARK, LV_FONT_DEFAULT);
     lv_disp_set_theme(disp, th);
-    return &disp;
+
+    return disp;
 }
 
-lv_disp_t createDisplay()
+static void ready()
 {
-    // lv_disp_set_default // 指定默认display
-    // lv_obj_get_disp
-    return *_createDefaultDisplay();
+    static int handler = 0;
+
+    if (handler)
+        return;
+
+    handler = 1;
+
+    LV_LOG_INFO("\r\n"
+                "LVGL v%d.%d.%d "
+                " Benchmark (in csv format)\r\n",
+                LVGL_VERSION_MAJOR, LVGL_VERSION_MINOR, LVGL_VERSION_PATCH);
+
+    lv_init();
+    LV_17_DISP_INIT;
+
+    createDisplay();
 }
 
-lv_obj_t *createCanvas(void *width, void *height)
+lv_obj_t *createCanvas(lv_coord_t width, lv_coord_t height)
 {
     ready();
 
@@ -64,8 +64,6 @@ lv_obj_t *createCanvas(void *width, void *height)
 
     if (!nowAct)
     {
-        lv_obj_set_width(&scr, *(lv_coord_t *)width);
-        lv_obj_set_height(&scr, *(lv_coord_t *)width);
         lv_scr_load(scr); /*Load the screen*/
     }
 
