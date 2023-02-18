@@ -54,17 +54,15 @@ static void ready()
     createDisplay();
 }
 
-lv_obj_t *createCanvas(lv_coord_t width, lv_coord_t height)
+lv_obj_t *createCanvas(int nowAct)
 {
     ready();
-
-    int nowAct = width == NULL && height == NULL;
 
     lv_obj_t *scr = nowAct ? lv_scr_act() : lv_obj_create(NULL);
 
     if (!nowAct)
     {
-        lv_scr_load(scr); /*Load the screen*/
+        lv_scr_load(scr);
     }
 
     // lv_obj_get_screen

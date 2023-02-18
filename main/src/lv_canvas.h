@@ -7,7 +7,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 
-lv_obj_t *createCanvas(lv_coord_t width, lv_coord_t height);
+lv_obj_t *createCanvas(int nowAct);
 static inline void handlerJob()
 {
     while (1)
