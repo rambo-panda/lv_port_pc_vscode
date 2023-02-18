@@ -8,6 +8,7 @@
 #include <unistd.h>
 
 lv_obj_t *createCanvas(int nowAct);
+void lvCanvasReady();
 static inline void handlerJob()
 {
     while (1)

@@ -1,17 +1,31 @@
 #include "./lv_canvas.h"
-#include <stdio.h>
-#include <stdlib.h>
-#include <unistd.h>
+#include <pthread.h>
 
-static void hal_init(void);
 static void demo(void);
+
+static void aa(void *_) {
+  sleep(5);
+
+  lv_obj_t *oscr = lv_scr_act();
+  lv_obj_t *scr = createCanvas(1);
+  lv_obj_t *label = lv_label_create(scr);
+  lv_label_set_text(label, "hello second");
+
+  sleep(3);
+
+  lv_scr_load(oscr);
+  lv_obj_del(scr);
+}
 
 int main(int argc, char **argv)
 {
   (void)argc; /*Unused*/
   (void)argv; /*Unused*/
 
-  createCanvas(NULL, NULL);
+  lvCanvasReady();
+
+  pthread_t t5;
+  pthread_create(&t5, NULL, (void *)aa, NULL);
 
   demo();
 
@@ -72,15 +86,4 @@ static void demo()
   // -> \nic_battery_充电中 -> \nic_battery_80% -> ");
   lv_label_set_text(label, "ic_保存 -> \nic_加号 -> ");
   lv_obj_center(label);
-}
-
-/**
- * Initialize the Hardware Abstraction Layer (HAL) for the LVGL graphics
- * library
- */
-static void hal_init(void)
-{
-  LV_17_DISP_INIT;
-
-  createDisplay();
 }

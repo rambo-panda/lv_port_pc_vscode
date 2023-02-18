@@ -34,7 +34,7 @@ static lv_disp_t *createDisplay()
     return disp;
 }
 
-static void ready()
+void lvCanvasReady()
 {
     static int handler = 0;
 
@@ -54,13 +54,11 @@ static void ready()
     createDisplay();
 }
 
-lv_obj_t *createCanvas(int nowAct)
+lv_obj_t *createCanvas(int autoLoad)
 {
-    ready();
+    lv_obj_t *scr = lv_obj_create(NULL);
 
-    lv_obj_t *scr = nowAct ? lv_scr_act() : lv_obj_create(NULL);
-
-    if (!nowAct)
+    if (autoLoad)
     {
         lv_scr_load(scr);
     }
