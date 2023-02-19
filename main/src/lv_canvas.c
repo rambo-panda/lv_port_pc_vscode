@@ -36,12 +36,9 @@ static lv_disp_t *createDisplay()
 
 void lvCanvasReady()
 {
-    static int handler = 0;
-
-    if (handler)
-        return;
-
-    handler = 1;
+    if (lv_is_initialized()) {
+        return ;
+    }
 
     LV_LOG_INFO("\r\n"
                 "LVGL v%d.%d.%d "

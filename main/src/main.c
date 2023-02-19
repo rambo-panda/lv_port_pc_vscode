@@ -24,8 +24,8 @@ int main(int argc, char **argv)
 
   lvCanvasReady();
 
-  pthread_t t5;
-  pthread_create(&t5, NULL, (void *)aa, NULL);
+  // pthread_t t5;
+  // pthread_create(&t5, NULL, (void *)aa, NULL);
 
   demo();
 
@@ -35,6 +35,34 @@ int main(int argc, char **argv)
 
 static void demo()
 {
+
+      {
+      static lv_style_t style;
+    lv_style_init(&style);
+    lv_style_set_border_width(&style, 1);
+    lv_style_set_border_color(&style, lv_palette_main(LV_PALETTE_ORANGE));
+    lv_style_set_pad_all(&style, 2);
+
+  lv_obj_t *label = lv_label_create(lv_scr_act());
+  lv_label_set_text(label, "");
+    lv_obj_t * spans = lv_spangroup_create(label);
+    lv_obj_set_width(spans, 300);
+    lv_obj_set_height(spans, 300);
+    lv_obj_center(spans);
+    lv_obj_add_style(spans, &style, 0);
+
+    lv_spangroup_set_align(spans, LV_TEXT_ALIGN_LEFT);
+    lv_spangroup_set_overflow(spans, LV_SPAN_OVERFLOW_CLIP);
+    lv_spangroup_set_indent(spans, 20);
+    lv_spangroup_set_mode(spans, LV_SPAN_MODE_BREAK);
+
+    lv_span_t * span = lv_spangroup_new_span(spans);
+    lv_span_set_text(span, "China is a beautiful country.");
+    lv_style_set_text_color(&span->style, lv_palette_main(LV_PALETTE_RED));
+    lv_style_set_text_decor(&span->style, LV_TEXT_DECOR_UNDERLINE);
+    lv_style_set_text_opa(&span->style, LV_OPA_50);
+      }
+  return ;
   lv_obj_t *img = lv_img_create(lv_scr_act());
 
   // lv_img_set_src(img, "S:lvgl/examples/libs/png/wink.png");

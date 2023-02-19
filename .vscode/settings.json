@@ -13,6 +13,8 @@
         "sdl_common.h": "c",
         "sdl_common_internal.h": "c",
         "lv_canvas.h": "c",
-        "stdio.h": "c"
+        "stdio.h": "c",
+        "lv_obj.h": "c",
+        "text.h": "c"
     }
 }
