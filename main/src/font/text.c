@@ -31,20 +31,22 @@ static const void (*LV_OBJ_TEXT_PTRS[])(TEXT_ACTION_FN_PARAMS) = {
     TEXT_ACTION_FN_NAME(TEXTAREA),
 };
 
-//static void *fillText(char *text, int *x, int *y, lv_obj_t *obj, lv_coord_t *maxWidth)
-static void *fillText(char *text, int *x, int *y, lv_obj_t *obj, lv_coord_t *maxWidth)
-{
-    lv_obj_t *parent = obj == NULL ? lv_label_create(lv_scr_act()) : obj;
-    // lv_label_set_text();
-    // lv_label_class
-    // switch (lv_obj_get_class(parent))
-    int len = sizeof LV_OBJ_CLASS_ARR / sizeof *LV_OBJ_CLASS_ARR;
-    while (--len > -1)
-    {
-        if (parent->class_p == LV_OBJ_CLASS_ARR[len])
-        {
-            (*LV_OBJ_TEXT_PTRS[len])(parent, text, x, y, maxWidth);
-            break;
-        }
+
+static void *fillText(const char *text, const lv_obj_t *parent, const lv_obj_t *obj, int *x, int *y,  int *maxWidth) {
+    if (text == NULL) {
+        return NULL;
     }
+
+    lv_obj_t *_parent = parent == NULL ? lv_scr_act() : parent;
+    lv_obj_t *o = obj == NULL ? lv_spangroup_create(_parent) : o;
+    lv_span_t * span = lv_spangroup_new_span(o);
+
+    // 在这个容器内的x y
+    // if (x != NULL) {
+    //     lv_obj_set_x(o, *(lv_coord_t *)x);
+    // }
+
+    // if (y != NULL) {
+    //     lv_obj_set_y(o, *(lv_coord_t *)y);
+    // }
 }
