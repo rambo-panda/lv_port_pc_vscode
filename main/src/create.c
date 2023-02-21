@@ -58,23 +58,6 @@ static char *joinStr(int a, ...) {
     return str;
 }
 
-lv_obj_t *xxx(lv_obj_t *p);
-lv_obj_t *xxx(lv_obj_t *p) {
-    lv_obj_t *z = lv_label_create(p);
-    LV_LOG_WARN("----------------");
-    return z;
-}
-
-void *xxxx(void *p);
-void *xxxx(void *p) {
-    lv_obj_t *z = (lv_obj_t *)(p);
-
-    lv_obj_t *p1  = lv_label_create(z);
-
-    LV_LOG_WARN("----------------");
-    return p1;
-}
-
 lv_obj_t *Create(char *t, lv_obj_t *parent)
 {
     if (t == "layer")
@@ -85,9 +68,7 @@ lv_obj_t *Create(char *t, lv_obj_t *parent)
 
     lv_obj_t *p = parent == NULL ? lv_scr_act() : parent;
 
-    //char *methodName = GEN_FN(joinStr, methodNamePre, t, methodNameSuf);
-
-    void *functionPtr = dlsym(RTLD_DEFAULT, "xxxx");
+    void *functionPtr = dlsym(RTLD_DEFAULT, GEN_FN(joinStr, methodNamePre, t, methodNameSuf));
 
     int argCount = 1;
     ffi_type **ffiArgTypes = alloca(sizeof(ffi_type *) * argCount);
@@ -117,8 +98,6 @@ lv_obj_t *Create(char *t, lv_obj_t *parent)
             returnPtr = alloca(returnFfiType->size);
         }
         ffi_call(&cif, functionPtr, returnPtr, ffiArgs);
-
-        printf("fdsfdsfdsf");
 
         // 拿到返回值
         ret = (lv_obj_t *)returnPtr;
