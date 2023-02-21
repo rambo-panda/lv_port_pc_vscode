@@ -73,9 +73,18 @@ char *joinStr(int a, ...) {
     ARGS(a, char *);
 
     char *str = (char *)malloc(1);
+    
+    if (str == NULL) {
+        printf("Not enough space to allocate string");
+        return NULL;
+    }
 
     for(int i = 0; i < a; i++) {
         str = (char *) realloc(str, strlen(str) + strlen(args[i]));
+        if (str == NULL) {
+            printf("Not enough space to allocate string");
+            return NULL;
+        }
         strcat(str, args[i]);
     }
 
