@@ -29,14 +29,14 @@ CFLAGS 				:= -O0 -g $(WARNINGS)
 DEFINES				:= -D SIMULATOR=1 -D LV_BUILD_TEST=0
 
 # Include simulator inc folder first so lv_conf.h from custom UI can be used instead
-INC 				:= -I./ui/simulator/inc/ -I./ -I./lvgl/ -I./lv_drivers/ -I/usr/local/Cellar/freetype/2.11.1/include/freetype2/ -I/usr/local/Cellar/libffi/3.4.2/include/
-LDLIBS	 			:= -lSDL2 -lm -lfreetype -lffi
-BIN 				:= $(BIN_DIR)/demo
+INC 				:= -I./ui/simulator/inc/ -I./ -I./lvgl/ -I./lv_drivers/ -I/usr/local/Cellar/freetype/2.11.1/include/freetype2/
+LDLIBS	 			:= -lSDL2 -lm -lfreetype
+BIN 				:= $(BIN_DIR)/liblvgl.so
 
 COMPILE				= $(CC) $(CFLAGS) $(INC) $(DEFINES)
 
 # Automatically include all source files
-SRCS 				:= $(shell find $(SRC_DIR) -type f -name '*.c'  -not -path '*/demos/*' -not -path '*/examples/*' -not -path '*/test/*' -not -path '*/lv_examples/*')
+SRCS 				:= $(shell find $(SRC_DIR) -type f -name '*.c' -not -path '*/main/*'  -not -path '*/demos/*' -not -path '*/examples/*' -not -path '*/test/*' -not -path '*/lv_examples/*')
 OBJECTS    			:= $(patsubst $(SRC_DIR)%,$(BUILD_DIR)/%,$(SRCS:.$(SRC_EXT)=.$(OBJ_EXT)))
 
 $(warning ${SRCS})
@@ -50,7 +50,7 @@ $(BUILD_DIR)/%.$(OBJ_EXT): $(SRC_DIR)/%.$(SRC_EXT)
 
 default: $(OBJECTS)
 	@mkdir -p $(BIN_DIR)
-	$(CC) -o $(BIN) $(OBJECTS) $(LDFLAGS) ${LDLIBS}
+	$(CC) -shared -o $(BIN) $(OBJECTS) $(LDFLAGS) ${LDLIBS}
 
 clean:
 	rm -rf $(WORKING_DIR)

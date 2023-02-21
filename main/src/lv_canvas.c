@@ -1,6 +1,5 @@
 #include "./lv_canvas.h"
 
-
 // TODO: 因为下面static原因，且目前对于多屏(屋里显示器)支持有些多余，暂时不考虑
 static lv_disp_t *createDisplay()
 {
@@ -36,8 +35,9 @@ static lv_disp_t *createDisplay()
 
 void lvCanvasReady()
 {
-    if (lv_is_initialized()) {
-        return ;
+    if (lv_is_initialized())
+    {
+        return;
     }
 
     LV_LOG_INFO("\r\n"
