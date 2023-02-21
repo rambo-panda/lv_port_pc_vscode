@@ -7,6 +7,8 @@
 #include <stdlib.h>
 #include <unistd.h>
 
+#define METHOD_NAME_PRE  "lv_"
+
 #define COUNT_ARGS(...) (sizeof((int[]){0, ##__VA_ARGS__}) / sizeof(int) - 1)
 
 #define GEN_FN(func, ...) (func(COUNT_ARGS(__VA_ARGS__), __VA_ARGS__))
@@ -33,6 +35,7 @@ static inline void handlerJob()
 };
 
 lv_obj_t *Create(char *t, lv_obj_t *parent);
+char *joinStr(int a, ...);
 
 #if USE_SDL == 1
 #include "sdl/sdl.h"

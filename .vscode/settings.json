@@ -21,6 +21,7 @@
         "pthread.h": "c",
         "dlfcn.h": "c",
         "cstdarg": "c",
-        "algorithm": "c"
+        "algorithm": "c",
+        "ffi.h": "c"
     }
 }
