@@ -38,17 +38,29 @@
 
 static char *METHOD_NAME_TAG = "_set_";
 
-lv_obj_t *Set(char *action, lv_obj_t *parent, char *o){
+// static char *ss[] = {"fsdfds", "fdfsd", "fdsfsd"};
+// static void *SetObj()
+// char *s[] = {
+// };
+// char x[] = {"fdsfds"};
+// char x[5] = "fdsfd";
+
+void Set(char *action, lv_obj_t *parent, char *oName, int len, ...)
+{
     lv_obj_t *p = parent == NULL ? lv_scr_act() : parent;
 
-    char *_o = o == NULL ? "obj" : o;
+    char *_o = (oName == NULL) ? "obj" : oName;
     void *functionPtr = dlsym(RTLD_DEFAULT, GEN_FN(joinStr, METHOD_NAME_PRE, _o, METHOD_NAME_TAG, action));
     free(_o);
-    lv_label_set_text
 
-    // int argCount = 1;
-    // ffi_type **ffiArgTypes = alloca(sizeof(ffi_type *) * argCount);
-    // ffiArgTypes[0] = &ffi_type_pointer;
+    ARGS(len, void *);
+
+    ffi_type **ffiArgTypes = alloca(sizeof(ffi_type *) * (len + 1));
+    ffiArgTypes[0] = &p;
+    for (int i = 0; i < len; i++)
+    {
+        ffiArgTypes[i] = &ffi_type_pointer;
+    }
 
     // void **ffiArgs = alloca(sizeof(void *) * argCount);
     // ffiArgs[0] = &p;

@@ -45,43 +45,28 @@ lv_obj_t *Create(char *t, lv_obj_t *parent)
         return lv_obj_create(NULL);
     }
 
-
     lv_obj_t *p = parent == NULL ? lv_scr_act() : parent;
 
-    void *functionPtr = dlsym(RTLD_DEFAULT, GEN_FN(joinStr, METHOD_NAME_PRE, t, METHOD_NAME_SUF));
+    void *fnPtr = dlsym(RTLD_DEFAULT, GEN_FN(joinStr, METHOD_NAME_PRE, t, METHOD_NAME_SUF));
 
-    int argCount = 1;
-    ffi_type **ffiArgTypes = alloca(sizeof(ffi_type *) * argCount);
-    ffiArgTypes[0] = &ffi_type_pointer;
-
-    void **ffiArgs = alloca(sizeof(void *) *argCount);
-    ffiArgs[0] = &p;
-
-    ffi_cif cif;
-    ffi_type *returnFfiType = &ffi_type_pointer;
-    ffi_status ffiPrepStatus = ffi_prep_cif_var(
-        &cif,
-        FFI_DEFAULT_ABI,
-        (unsigned int)0,
-        (unsigned int)argCount,
-        returnFfiType,
-        ffiArgTypes);
-
-    lv_obj_t *ret = NULL;
-
-    if (ffiPrepStatus == FFI_OK)
+    if (fnPtr == NULL)
     {
-        // 生成用于保存返回值的内存
-        void *returnPtr = NULL;
-        if (returnFfiType->size)
-        {
-            returnPtr = alloca(returnFfiType->size);
-        }
-        ffi_call(&cif, functionPtr, returnPtr, ffiArgs);
-
-        // 拿到返回值
-        ret = (lv_obj_t *)returnPtr;
+        return NULL;
     }
 
-    return ret;
+    ffi_type *types[] = {&ffi_type_pointer};
+    void *args[] = {&p};
+
+    ffi_cif cif;
+    if (ffi_prep_cif(&cif, FFI_DEFAULT_ABI, sizeof(args) / sizeof(*args), &ffi_type_pointer, types) != FFI_OK)
+    {
+        return NULL;
+    }
+
+    // 生成用于保存返回值的内存
+    void *returnPtr;
+
+    ffi_call(&cif, fnPtr, &returnPtr, args);
+
+    return (lv_obj_t *)(returnPtr);
 }

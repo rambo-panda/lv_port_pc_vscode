@@ -35,6 +35,7 @@ static inline void handlerJob()
 };
 
 lv_obj_t *Create(char *t, lv_obj_t *parent);
+void Set(char *action, lv_obj_t *parent, char *oName, int len, ...);
 char *joinStr(int a, ...);
 
 #if USE_SDL == 1

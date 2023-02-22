@@ -27,7 +27,10 @@ int main(int argc, char **argv) {
   // pthread_t t5;
   // pthread_create(&t5, NULL, (void *)aa, NULL);
 
-  Create("label", NULL);
+  lv_obj_t *label = Create("label", NULL);
+  // int a = 100;
+  lv_obj_set_width(label, 100);
+  // Set()
   // demo();
 
   handlerJob();
