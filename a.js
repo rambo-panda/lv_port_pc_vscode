@@ -1,4 +1,5 @@
 const CT = new Set();
+const ERROR = new Set();
 const { ChildProcess } = require("child_process");
 
 const _REG_TYPE = (t) =>
@@ -43,11 +44,11 @@ const transRt = (rt) => {
   );
 };
 
-const addCt = t => {
+const addCt = (t) => {
   if (t.startsWith("lv_") || t.startsWith("_")) {
     CT.add(t.trim());
   }
-}
+};
 
 const transTypeForGo = (t) => {
   const r =
@@ -93,7 +94,7 @@ const transTypeForC = (t, name) => {
   }
 
   if (r.includes("*")) {
-    return `(*C.${r.replace("*", "").trim()})(unsafe.Pointer(${name}))`
+    return `(*C.${r.replace("*", "").trim()})(unsafe.Pointer(${name}))`;
   }
 
   return `C.${r}(${name})`;
@@ -183,21 +184,25 @@ import (
   lib "lvgl-go/src/lib"
 )\n`;
 
-  fs.readFileSync("ccc1", { encoding: "utf8" })
+  fs.readFileSync("ccc", { encoding: "utf8" })
     .trim()
     .replaceAll(/,\n\s+/gm, ",")
     .replaceAll(/const /g, "")
     .split("\n")
     .forEach((line) => {
-      const {
-          groups: { action, obj },
-        } = regFileName.exec(line),
-        fileName = `${obj}`,
-        j = done.get(fileName) ?? done.set(fileName, new Set()).get(fileName);
+      try {
+        const {
+            groups: { action, obj },
+          } = regFileName.exec(line),
+          fileName = `${obj}`,
+          j = done.get(fileName) ?? done.set(fileName, new Set()).get(fileName);
 
-      //console.log(line);
+        //console.log(line);
 
-      j.add(doIt(line));
+        j.add(doIt(line));
+      } catch (error) {
+        ERROR.add(line);
+      }
     });
 
   child_process.execSync("rm -rf ./done_go/* && mkdir -p ./done_go/set");
@@ -210,9 +215,16 @@ import (
     );
   });
 
-  console.log([...CT].map(v => {
-    let x = v.replace("*", "").replace(/^_/, '');
+  console.log(
+    [...CT]
+      .map((v) => {
+        let x = v.replace("*", "").replace(/^_/, "");
 
-    return `type ${toHump(x)} C.${x}`;
-  }).join("\n"));
+        return `type ${toHump(x)} C.${x}`;
+      })
+      .join("\n")
+  );
+
+  console.log("-==========================---");
+  console.log([...ERROR]);
 }
