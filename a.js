@@ -31,7 +31,7 @@ const toHump = (v) => {
     } = regName.exec(name);
 
     //return [action, attr, "For", obj].map(toHump).join("");
-    return [attr, "For", obj].map(toHump).join("");
+    return [action, attr].map(toHump).join("");
   };
 
 const transRt = (rt) => {
@@ -113,7 +113,13 @@ const transArg = (args) => {
         .map((v) => (v ?? "").trim())
     )
     .forEach(([type, struct, name]) => {
-      go.push(`${name} ${transTypeForGo(struct ? `${struct} *` : type, name)}`);
+      if (type === "lv_obj_t *") {
+        name = "self.o";
+        // c.push(`${name} := ${transTypeForC(type, "self.o")}`);
+        // return ;
+      } else {
+        go.push(`${name} ${transTypeForGo(struct ? `${struct} *` : type, name)}`);
+      }
 
       c.push(
         struct
@@ -130,11 +136,12 @@ const RETURN_TYPE = "丨_RETURN_TYPE__",
   NAME_C = "丨_NAME__C_|",
   ARGS = "丨_ARGS_GO_|",
   ARGS_C = "丨_ARGS__C_|",
+  OBJ_TAG = "丨PARNET_TAG|",
   RETURN_VAL = "丨_RETURN_VAL__",
-  RETURN_TAG = "RETURN_TAG",
+  RETURN_TAG = "丨RETURN_TAG__",
   RETURN_VAR = "res := ";
 
-const TEMPLATE = `func ${NAME}(${ARGS}) ${RETURN_TYPE} {
+const TEMPLATE = `func ${OBJ_TAG} ${NAME}(${ARGS}) ${RETURN_TYPE} {
   ${RETURN_TAG} C.${NAME_C}(${ARGS_C})
 
   ${RETURN_VAL}
@@ -144,23 +151,25 @@ const TEMPLATE = `func ${NAME}(${ARGS}) ${RETURN_TYPE} {
 // C.myprint(cs)
 // C.free(unsafe.Pointer(cs))
 
-const doIt = (str) => {
+const doIt = (str, objTag) => {
   const {
     groups: { returnType, funcName, args },
   } = regex.exec(str);
 
   const [rt, rv] = transRt(returnType),
-    [argC, argGo] = transArg(args);
+    [argC, argGo, extra] = transArg(args),
+    [rType, rValue, rTag] = rv
+      ? [rt, `return ${rv}`, RETURN_VAR]
+      : [objTag, "return self", ""];
 
-  let ret = TEMPLATE.replace(NAME_C, funcName)
+  return TEMPLATE.replace(NAME_C, funcName)
     .replace(NAME, transName(funcName))
-    .replace(RETURN_TYPE, rt)
-    .replace(RETURN_VAL, rv ? `return ${rv}` : "")
-    .replace(RETURN_TAG, rv ? RETURN_VAR : "")
+    .replace(OBJ_TAG, `(self ${objTag})`)
+    .replace(RETURN_TYPE, rType)
+    .replace(RETURN_VAL, rValue)
+    .replace(RETURN_TAG, rTag)
     .replace(ARGS_C, argC)
     .replace(ARGS, argGo);
-
-  return ret;
 };
 
 // const fs = require("fs");
@@ -170,7 +179,7 @@ const doIt = (str) => {
   const done = new Map(),
     fs = require("fs"),
     child_process = require("child_process"),
-    regFileName = /lv_(?<obj>\w+?)_(?<action>\w+?)/,
+    regFileName = /lv_(?<obj>\w+?)_(?<action>\w+?)_/,
     headerTxt = `package set
 
 /*
@@ -182,7 +191,8 @@ import "C"
 import (
 	"unsafe"
   lib "lvgl-go/src/lib"
-)\n`;
+)
+`;
 
   fs.readFileSync("ccc", { encoding: "utf8" })
     .trim()
@@ -197,9 +207,18 @@ import (
           fileName = `${obj}`,
           j = done.get(fileName) ?? done.set(fileName, new Set()).get(fileName);
 
-        //console.log(line);
+        const objTag = `_${action}${toHump(obj)}`;
 
-        j.add(doIt(line));
+        j.add(`type ${objTag} struct{
+            o  *lib.LvObjT
+        }
+        func create${toHump(action)}For${toHump(obj)} (o *lib.LvObjT) ${objTag}{
+return ${objTag}{
+o,
+}
+}
+`);
+        j.add(doIt(line, objTag));
       } catch (error) {
         ERROR.add(line);
       }
@@ -209,7 +228,8 @@ import (
 
   done.forEach((v, fileName) => {
     fs.writeFileSync(
-      `../go_lvgl/src/set/${fileName}.go`,
+      //`../go_lvgl/src/set/${fileName}.go`,
+      `./done_ok/set/${fileName}.go`,
       headerTxt + [...v].join("\n"),
       "utf8"
     );
