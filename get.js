@@ -3,9 +3,9 @@ const ERROR = new Set();
 const { ChildProcess } = require("child_process");
 
 const _REG_TYPE = (t) =>
-    `(?<${t}>(?:void|int|char|short|long|float|double\\s*\\*?)`,
-  REG_TYPE = (t) => `(?<${t}>[a-zA-Z_]+\\s*\\*?)`,
-  REG_NAME = (name) => `(?<${name}>[a-zA-Z_]+)`;
+    `(?<${t}>(?:void|int|char|short|long|float|double\\s*\\*?\\s*)`,
+  REG_TYPE = (t) => `(?<${t}>[0-9a-zA-Z_]+\\s*\\*?\\s*)`,
+  REG_NAME = (name) => `(?<${name}>[0-9a-zA-Z_]+)`;
 
 const regex = new RegExp(
     `^\\s*(?<sign>unsigned|signed)?\\s*${REG_TYPE("returnType")}${REG_NAME(
@@ -16,6 +16,7 @@ const regex = new RegExp(
   //regArg = new RegExp(`^\\s*${REG_TYPE("type")}${REG_NAME("name")}\\s*$`);
   regArg =
     /(?<type>(?:struct\s*(?<struct>[^ ]+))?.+)(?<= )(?<name>[a-zA-Z_]+$)/;
+
 
 //const toHump = (v) => [v[0].toUpperCase(), ...v.slice(1)].join(""),
 const toHump = (v) => {
@@ -35,12 +36,17 @@ const toHump = (v) => {
   };
 
 const transRt = (rt) => {
+  const _rt = rt.replace("*", "").trim(),
+    k = rt.trim() === _rt;
+
   return (
     {
       void: ["", ""],
-      bool: ["bool", "res"],
-      "chat *": ["string", "C.GoString(res)"],
-    }[rt] ?? ["", ""]
+      bool: ["bool", "bool(res)"],
+      "char": ["string", "C.GoString(res)"],
+      "lv_coord_t": ["int16", "int16(res)"],
+      "uint32_t": ["uint32", "uint32(res)"],
+    }[_rt] ?? [`${k ? "" : "*"}lib.${toHump(_rt)}`, k ? `lib.${toHump(_rt)}(res)` : `(*lib.${toHump(_rt)})(unsafe.Pointer(res))`]
   );
 };
 
@@ -117,8 +123,8 @@ const transArg = (args) => {
         name = "_type"; // go关键字
       }
       if (type === "lv_obj_t *") {
-        name = "setter.cObj";
-        // c.push(`${name} := ${transTypeForC(type, "setter.cObj")}`);
+        name = "getter.cObj";
+        // c.push(`${name} := ${transTypeForC(type, "getter.cObj")}`);
         // return ;
         c.push(
           name
@@ -169,11 +175,11 @@ const doIt = (str, objTag) => {
     [argC, argGo, extra] = transArg(args),
     [rType, rValue, rTag] = rv
       ? [rt, `return ${rv}`, RETURN_VAR]
-      : [objTag, "return setter", ""];
+      : [objTag, "return getter", ""];
 
   return TEMPLATE.replace(NAME_C, funcName)
     .replace(NAME, transName(funcName))
-    .replace(OBJ_TAG, `(setter ${objTag})`)
+    .replace(OBJ_TAG, `(getter ${objTag})`)
     .replace(RETURN_TYPE, rType)
     .replace(RETURN_VAL, rValue)
     .replace(RETURN_TAG, rTag)
@@ -188,8 +194,8 @@ const doIt = (str, objTag) => {
   const done = new Map(),
     fs = require("fs"),
     child_process = require("child_process"),
-    regFileName = /lv_(?<obj>\w+?)_(?<action>\w+?)_/,
-    headerTxt = `package set
+    regFileName = / lv_(?<obj>\w+?)_(?<action>\w+?)_/,
+    headerTxt = `package get
 
 /*
 #cgo CFLAGS: -I../include/
@@ -218,20 +224,20 @@ import (
 
         const objTag = toHump(`${action}_${obj}`);
 
-        j.add(`type ${objTag} set`);
+        j.add(`type ${objTag} Get`);
         j.add(doIt(line, objTag));
       } catch (error) {
         ERROR.add(line);
       }
     });
 
-  child_process.execSync("rm -rf ./done_go/* && mkdir -p ./done_go/set");
+  child_process.execSync("rm -rf ./done_go/* && mkdir -p ./done_go/get");
 
   done.forEach((v, fileName) => {
     const t = headerTxt + [...v].join("\n");
     fs.writeFileSync(
       //`../go_lvgl/src/set/${fileName}.go`,
-      `./done_go/set/${fileName}.go`,
+      `./done_go/get/${fileName}.go`,
       t.includes("unsafe.") ? t : t.replace(`"unsafe"`, ""),
       "utf8"
     );
@@ -250,30 +256,3 @@ import (
   console.log("-==========================---");
   console.log([...ERROR]);
 }
-
-
-
-// #!/bin/bash
-//
-// sources=`find ./ -name "*.h" -type f -not -path '*/ccc*' -not -path '*/demos/*' -not -path '*/examples/*' -not -path '*/test/*' -not -path '*/lv_examples/*'`
-//
-// # grep  _set_ -A 2 /Users/rambo/work_space/lvgl_tutorial/lv_sim_vscode_sdl_8_3/lvgl/src/core/lv_obj_style.c > ccc
-//
-// echo "" > ccc
-//
-// for file in ${sources}
-// do
-//   echo "$file"
-//   grep "_set_" -A 1 ${file} >> ccc
-// done
-//
-// gsed -i '/^static/d' ccc
-// gsed -i '/^#/d' ccc
-// gsed -i '/^ \*/d' ccc
-// gsed -i '/^\//d' ccc
-// gsed -i '/^--/d' ccc
-// gsed -i '/^[  ]*$/d' ccc
-// gsed -i '/^  lv_/d' ccc
-// gsed -i '/^{/d' ccc
-// gsed -i '/^}/d' ccc
-// gsed -i '/^    lv/d' ccc

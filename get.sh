@@ -9,7 +9,7 @@ echo "" > ccc
 for file in ${sources}
 do
   echo "$file"
-  grep "_set_" -A 1 ${file} >> ccc
+  grep "lv_label_get_"  ${file} >> ccc
 done
 
 gsed -i '/^static/d' ccc
