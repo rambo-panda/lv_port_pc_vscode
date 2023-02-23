@@ -22,6 +22,7 @@
         "dlfcn.h": "c",
         "cstdarg": "c",
         "algorithm": "c",
-        "ffi.h": "c"
+        "ffi.h": "c",
+        "ccc": "c"
     }
 }

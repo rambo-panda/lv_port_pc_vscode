@@ -122,7 +122,7 @@ const transArg = (args) => {
         name = "_type"; // go关键字
       }
       if (type === "lv_obj_t *") {
-        name = "setter.cObj";
+        name = "setter.CStructLvObjT";
         // c.push(`${name} := ${transTypeForC(type, "setter.cObj")}`);
         // return ;
         c.push(
@@ -223,7 +223,17 @@ import (
 
         const objTag = toHump(`${action}_${obj}`);
 
-        j.add(`type ${objTag} set`);
+        j.add(`type ${objTag} set
+func Create${toHump(obj)}(o *lib.LvObjT) ${objTag} {
+	return ${objTag}{
+		CStructLvObjT: (*C.struct__lv_obj_t)(unsafe.Pointer(o)),
+	}
+}
+
+func (setter ${objTag}) GetObj() *lib.LvObjT {
+	return (*lib.LvObjT)(unsafe.Pointer(setter.CStructLvObjT))
+}
+`);
         j.add(doIt(line, objTag));
       } catch (error) {
         ERROR.add(line);
