@@ -1,10 +1,9 @@
+const ACTION_TYPE = process.argv[2] ?? "set";
+
 const CT = new Set();
 const ERROR = new Set();
-const { ChildProcess } = require("child_process");
 
-const _REG_TYPE = (t) =>
-    `(?<${t}>(?:void|int|char|short|long|float|double\\s*\\*?\\s*)`,
-  REG_TYPE = (t) => `(?<${t}>[0-9a-zA-Z_]+\\s*\\*?\\s*)`,
+const REG_TYPE = (t) => `(?<${t}>[0-9a-zA-Z_]+\\s*\\*?\\s*)`,
   REG_NAME = (name) => `(?<${name}>[0-9a-zA-Z_]+)`;
 
 const regex = new RegExp(
@@ -13,39 +12,44 @@ const regex = new RegExp(
     )}\\s*\\((?<args>[^)]*)\\s*\\)\\s*;$`
   ),
   regName = /^lv_(?<obj>\w+?)_(?<action>\w+?)_(?<attr>.+)$/,
-  //regArg = new RegExp(`^\\s*${REG_TYPE("type")}${REG_NAME("name")}\\s*$`);
+  // regArg = new RegExp(`^\\s*${REG_TYPE("type")}${REG_NAME("name")}\\s*$`);
   regArg =
     /(?<type>(?:struct\s*(?<struct>[^ ]+))?.+)(?<= )(?<name>[a-zA-Z_]+$)/;
 
-//const toHump = (v) => [v[0].toUpperCase(), ...v.slice(1)].join(""),
+// const toHump = (v) => [v[0].toUpperCase(), ...v.slice(1)].join(""),
 const toHump = (v) => {
     const r = v
       .trim()
       .replace(/^_?/, "_")
-      .replaceAll(/_(\w)/g, (_, v) => v.toUpperCase());
+      .replaceAll(/_(\w)/g, (_, k) => k.toUpperCase());
     return r;
   },
   transName = (name) => {
     const {
-      groups: { obj, action, attr },
+      groups: { action, attr },
     } = regName.exec(name);
 
-    //return [action, attr, "For", obj].map(toHump).join("");
+    // return [action, attr, "For", obj].map(toHump).join("");
     return [action, attr].map(toHump).join("");
   };
 
 const transRt = (rt) => {
-  const _rt = rt.replace("*", "").trim(),
-    k = rt.trim() === _rt;
+  const rt2 = rt.replace("*", "").trim(),
+    k = rt.trim() === rt2;
 
   return (
     {
       void: ["", ""],
       bool: ["bool", "bool(res)"],
-      "char": ["string", "C.GoString(res)"],
-      "lv_coord_t": ["int16", "int16(res)"],
-      "uint32_t": ["uint32", "uint32(res)"],
-    }[_rt] ?? [`${k ? "" : "*"}lib.${toHump(_rt)}`, k ? `lib.${toHump(_rt)}(res)` : `(*lib.${toHump(_rt)})(unsafe.Pointer(res))`]
+      char: ["string", "C.GoString(res)"],
+      lv_coord_t: ["int16", "int16(res)"],
+      uint32_t: ["uint32", "uint32(res)"],
+    }[rt2] ?? [
+      `${k ? "" : "*"}lib.${toHump(rt2)}`,
+      k
+        ? `lib.${toHump(rt2)}(res)`
+        : `(*lib.${toHump(rt2)})(unsafe.Pointer(res))`,
+    ]
   );
 };
 
@@ -122,18 +126,13 @@ const transArg = (args) => {
         name = "_type"; // go关键字
       }
       if (type === "lv_obj_t *") {
-        name = "setter.CStructLvObjT";
-        // c.push(`${name} := ${transTypeForC(type, "setter.cObj")}`);
+        name = `${ACTION_TYPE}ter.CStructLvObjT`;
+        // c.push(`${name} := ${transTypeForC(type, "${ACTION_TYPE}ter.cObj")}`);
         // return ;
-        c.push(
-          name
-        );
+        c.push(name);
         return;
-      } else {
-        go.push(
-          `${name} ${transTypeForGo(struct ? `${struct} *` : type, name)}`
-        );
       }
+      go.push(`${name} ${transTypeForGo(struct ? `${struct} *` : type, name)}`);
 
       c.push(
         struct
@@ -171,14 +170,14 @@ const doIt = (str, objTag) => {
   } = regex.exec(str);
 
   const [rt, rv] = transRt(returnType),
-    [argC, argGo, extra] = transArg(args),
+    [argC, argGo] = transArg(args),
     [rType, rValue, rTag] = rv
       ? [rt, `return ${rv}`, RETURN_VAR]
-      : [objTag, "return setter", ""];
+      : [objTag, `return ${ACTION_TYPE}ter`, ""];
 
   return TEMPLATE.replace(NAME_C, funcName)
     .replace(NAME, transName(funcName))
-    .replace(OBJ_TAG, `(setter ${objTag})`)
+    .replace(OBJ_TAG, `(${ACTION_TYPE}ter ${objTag})`)
     .replace(RETURN_TYPE, rType)
     .replace(RETURN_VAL, rValue)
     .replace(RETURN_TAG, rTag)
@@ -194,7 +193,7 @@ const doIt = (str, objTag) => {
     fs = require("fs"),
     child_process = require("child_process"),
     regFileName = / lv_(?<obj>\w+?)_(?<action>\w+?)_/,
-    headerTxt = `package set
+    headerTxt = `package ${ACTION_TYPE}
 
 /*
 #cgo CFLAGS: -I../include/
@@ -223,15 +222,15 @@ import (
 
         const objTag = toHump(`${action}_${obj}`);
 
-        j.add(`type ${objTag} set
+        j.add(`type ${objTag} ${ACTION_TYPE}
 func Create${toHump(obj)}(o *lib.LvObjT) ${objTag} {
 	return ${objTag}{
 		CStructLvObjT: (*C.struct__lv_obj_t)(unsafe.Pointer(o)),
 	}
 }
 
-func (setter ${objTag}) GetObj() *lib.LvObjT {
-	return (*lib.LvObjT)(unsafe.Pointer(setter.CStructLvObjT))
+func (${ACTION_TYPE}ter ${objTag}) GetObj() *lib.LvObjT {
+	return (*lib.LvObjT)(unsafe.Pointer(${ACTION_TYPE}ter.CStructLvObjT))
 }
 `);
         j.add(doIt(line, objTag));
@@ -240,13 +239,15 @@ func (setter ${objTag}) GetObj() *lib.LvObjT {
       }
     });
 
-  child_process.execSync("rm -rf ./done_go/* && mkdir -p ./done_go/set");
+  child_process.execSync(
+    `rm -rf ./done_go/${ACTION_TYPE} && mkdir -p ./done_go/${ACTION_TYPE}`
+  );
 
   done.forEach((v, fileName) => {
     const t = headerTxt + [...v].join("\n");
     fs.writeFileSync(
-      //`../go_lvgl/src/set/${fileName}.go`,
-      `./done_go/set/${fileName}.go`,
+      // `../go_lvgl/src/${ACTION_TYPE}/${fileName}.go`,
+      `./done_go/${ACTION_TYPE}/${fileName}.go`,
       t.includes("unsafe.") ? t : t.replace(`"unsafe"`, ""),
       "utf8"
     );
@@ -255,7 +256,7 @@ func (setter ${objTag}) GetObj() *lib.LvObjT {
   console.log(
     [...CT]
       .map((v) => {
-        let x = v.replace("*", "").replace(/^_/, "");
+        const x = v.replace("*", "").replace(/^_/, "");
 
         return `type ${toHump(x)} C.${x}`;
       })
@@ -265,8 +266,6 @@ func (setter ${objTag}) GetObj() *lib.LvObjT {
   console.log("-==========================---");
   console.log([...ERROR]);
 }
-
-
 
 // #!/bin/bash
 //
@@ -282,6 +281,33 @@ func (setter ${objTag}) GetObj() *lib.LvObjT {
 //   grep "_set_" -A 1 ${file} >> ccc
 // done
 //
+// gsed -i '/^static/d' ccc
+// gsed -i '/^#/d' ccc
+// gsed -i '/^ \*/d' ccc
+// gsed -i '/^\//d' ccc
+// gsed -i '/^--/d' ccc
+// gsed -i '/^[  ]*$/d' ccc
+// gsed -i '/^  lv_/d' ccc
+// gsed -i '/^{/d' ccc
+// gsed -i '/^}/d' ccc
+// gsed -i '/^    lv/d' ccc
+
+
+// ===============
+// #!/bin/bash
+
+// sources=`find ./ -name "*.h" -type f -not -path '*/ccc*' -not -path '*/demos/*' -not -path '*/examples/*' -not -path '*/test/*' -not -path '*/lv_examples/*'`
+
+// # grep  _set_ -A 2 /Users/rambo/work_space/lvgl_tutorial/lv_sim_vscode_sdl_8_3/lvgl/src/core/lv_obj_style.c > ccc
+
+// echo "" > ccc
+
+// for file in ${sources}
+// do
+//   echo "$file"
+//   grep "lv_label_get_"  ${file} >> ccc
+// done
+
 // gsed -i '/^static/d' ccc
 // gsed -i '/^#/d' ccc
 // gsed -i '/^ \*/d' ccc
