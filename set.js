@@ -113,12 +113,21 @@ const transArg = (args) => {
         .map((v) => (v ?? "").trim())
     )
     .forEach(([type, struct, name]) => {
+      if (name === "type") {
+        name = "_type"; // go关键字
+      }
       if (type === "lv_obj_t *") {
-        name = "self.o";
-        // c.push(`${name} := ${transTypeForC(type, "self.o")}`);
+        name = "setter.cObj";
+        // c.push(`${name} := ${transTypeForC(type, "setter.cObj")}`);
         // return ;
+        c.push(
+          name
+        );
+        return;
       } else {
-        go.push(`${name} ${transTypeForGo(struct ? `${struct} *` : type, name)}`);
+        go.push(
+          `${name} ${transTypeForGo(struct ? `${struct} *` : type, name)}`
+        );
       }
 
       c.push(
@@ -160,11 +169,11 @@ const doIt = (str, objTag) => {
     [argC, argGo, extra] = transArg(args),
     [rType, rValue, rTag] = rv
       ? [rt, `return ${rv}`, RETURN_VAR]
-      : [objTag, "return self", ""];
+      : [objTag, "return setter", ""];
 
   return TEMPLATE.replace(NAME_C, funcName)
     .replace(NAME, transName(funcName))
-    .replace(OBJ_TAG, `(self ${objTag})`)
+    .replace(OBJ_TAG, `(setter ${objTag})`)
     .replace(RETURN_TYPE, rType)
     .replace(RETURN_VAL, rValue)
     .replace(RETURN_TAG, rTag)
@@ -207,17 +216,9 @@ import (
           fileName = `${obj}`,
           j = done.get(fileName) ?? done.set(fileName, new Set()).get(fileName);
 
-        const objTag = `_${action}${toHump(obj)}`;
+        const objTag = toHump(`${action}_${obj}`);
 
-        j.add(`type ${objTag} struct{
-            o  *lib.LvObjT
-        }
-        func create${toHump(action)}For${toHump(obj)} (o *lib.LvObjT) ${objTag}{
-return ${objTag}{
-o,
-}
-}
-`);
+        j.add(`type ${objTag} set`);
         j.add(doIt(line, objTag));
       } catch (error) {
         ERROR.add(line);
@@ -227,10 +228,11 @@ o,
   child_process.execSync("rm -rf ./done_go/* && mkdir -p ./done_go/set");
 
   done.forEach((v, fileName) => {
+    const t = headerTxt + [...v].join("\n");
     fs.writeFileSync(
       //`../go_lvgl/src/set/${fileName}.go`,
-      `./done_ok/set/${fileName}.go`,
-      headerTxt + [...v].join("\n"),
+      `./done_go/set/${fileName}.go`,
+      t.includes("unsafe.") ? t : t.replace(`"unsafe"`, ""),
       "utf8"
     );
   });
