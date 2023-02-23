@@ -3,9 +3,9 @@ const ERROR = new Set();
 const { ChildProcess } = require("child_process");
 
 const _REG_TYPE = (t) =>
-    `(?<${t}>(?:void|int|char|short|long|float|double\\s*\\*?)`,
-  REG_TYPE = (t) => `(?<${t}>[a-zA-Z_]+\\s*\\*?)`,
-  REG_NAME = (name) => `(?<${name}>[a-zA-Z_]+)`;
+    `(?<${t}>(?:void|int|char|short|long|float|double\\s*\\*?\\s*)`,
+  REG_TYPE = (t) => `(?<${t}>[0-9a-zA-Z_]+\\s*\\*?\\s*)`,
+  REG_NAME = (name) => `(?<${name}>[0-9a-zA-Z_]+)`;
 
 const regex = new RegExp(
     `^\\s*(?<sign>unsigned|signed)?\\s*${REG_TYPE("returnType")}${REG_NAME(
@@ -35,12 +35,17 @@ const toHump = (v) => {
   };
 
 const transRt = (rt) => {
+  const _rt = rt.replace("*", "").trim(),
+    k = rt.trim() === _rt;
+
   return (
     {
       void: ["", ""],
-      bool: ["bool", "res"],
-      "chat *": ["string", "C.GoString(res)"],
-    }[rt] ?? ["", ""]
+      bool: ["bool", "bool(res)"],
+      "char": ["string", "C.GoString(res)"],
+      "lv_coord_t": ["int16", "int16(res)"],
+      "uint32_t": ["uint32", "uint32(res)"],
+    }[_rt] ?? [`${k ? "" : "*"}lib.${toHump(_rt)}`, k ? `lib.${toHump(_rt)}(res)` : `(*lib.${toHump(_rt)})(unsafe.Pointer(res))`]
   );
 };
 
@@ -188,7 +193,7 @@ const doIt = (str, objTag) => {
   const done = new Map(),
     fs = require("fs"),
     child_process = require("child_process"),
-    regFileName = /lv_(?<obj>\w+?)_(?<action>\w+?)_/,
+    regFileName = / lv_(?<obj>\w+?)_(?<action>\w+?)_/,
     headerTxt = `package set
 
 /*
