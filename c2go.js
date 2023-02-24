@@ -228,10 +228,6 @@ func Create${toHump(obj)}(o *types.LvObjT) ${objTag} {
 		CStructLvObjT: (*C.struct__lv_obj_t)(unsafe.Pointer(o)),
 	}
 }
-
-func (${ACTION_TYPE}ter ${objTag}) GetObj() *types.LvObjT {
-	return (*types.LvObjT)(unsafe.Pointer(${ACTION_TYPE}ter.CStructLvObjT))
-}
 `);
         j.add(doIt(line, objTag));
       } catch (error) {
