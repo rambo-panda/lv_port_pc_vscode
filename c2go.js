@@ -220,7 +220,7 @@ import (
           fileName = `${obj}`,
           j = done.get(fileName) ?? done.set(fileName, new Set()).get(fileName);
 
-        const objTag = toHump(`${action}_${obj}`);
+        const objTag = toHump(obj);
 
         j.add(`type ${objTag} ${ACTION_TYPE}
 func Create${toHump(obj)}(o *types.LvObjT) ${objTag} {
