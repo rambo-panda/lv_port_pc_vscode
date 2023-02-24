@@ -44,10 +44,10 @@ const transRt = (rt) => {
       lv_coord_t: ["int16", "int16(res)"],
       uint32_t: ["uint32", "uint32(res)"],
     }[rt2] ?? [
-      `${k ? "" : "*"}lib.${toHump(rt2)}`,
+      `${k ? "" : "*"}types.${toHump(rt2)}`,
       k
-        ? `lib.${toHump(rt2)}(res)`
-        : `(*lib.${toHump(rt2)})(unsafe.Pointer(res))`,
+        ? `types.${toHump(rt2)}(res)`
+        : `(*types.${toHump(rt2)})(unsafe.Pointer(res))`,
     ]
   );
 };
@@ -203,6 +203,7 @@ import "C"
 import (
 	"unsafe"
   lib "lvgl-go/src/lib"
+  types "lvgl-go/src/types"
 )
 `;
 
@@ -222,14 +223,14 @@ import (
         const objTag = toHump(`${action}_${obj}`);
 
         j.add(`type ${objTag} ${ACTION_TYPE}
-func Create${toHump(obj)}(o *lib.LvObjT) ${objTag} {
+func Create${toHump(obj)}(o *types.LvObjT) ${objTag} {
 	return ${objTag}{
 		CStructLvObjT: (*C.struct__lv_obj_t)(unsafe.Pointer(o)),
 	}
 }
 
-func (${ACTION_TYPE}ter ${objTag}) GetObj() *lib.LvObjT {
-	return (*lib.LvObjT)(unsafe.Pointer(${ACTION_TYPE}ter.CStructLvObjT))
+func (${ACTION_TYPE}ter ${objTag}) GetObj() *types.LvObjT {
+	return (*types.LvObjT)(unsafe.Pointer(${ACTION_TYPE}ter.CStructLvObjT))
 }
 `);
         j.add(doIt(line, objTag));
@@ -290,7 +291,6 @@ func (${ACTION_TYPE}ter ${objTag}) GetObj() *lib.LvObjT {
 // gsed -i '/^{/d' ccc
 // gsed -i '/^}/d' ccc
 // gsed -i '/^    lv/d' ccc
-
 
 // ===============
 // #!/bin/bash
