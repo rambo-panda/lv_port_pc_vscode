@@ -29,8 +29,7 @@ const toHump = (v) => {
       groups: { action, attr },
     } = regName.exec(name);
 
-    // return [action, attr, "For", obj].map(toHump).join("");
-    return [action, attr].map(toHump).join("");
+    return [attr].map(toHump).join("");
   };
 
 const transRt = (rt) => {
